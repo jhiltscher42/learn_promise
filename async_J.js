@@ -232,9 +232,9 @@ define([],function(){
 		return ret.restricted;
 	}
 
-	function delay(ms){
+	function delay(ms,valToResolve){
 		var ret=new promise();
-		setTimeout(ret.resolve,ms);
+		setTimeout(ret.resolve.bind(ret,valToResolve),ms);
 		return ret.restricted;
 	}
 	
