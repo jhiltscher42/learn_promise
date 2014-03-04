@@ -14,7 +14,7 @@ It is meant to be used with AMD (I used requireJS) and returns a plain JS object
    
    some(a,b,...z),/* utility function which resolves when all of its arguments resolve or reject */
    
-   delay(ms),     /* utility function which lifts setTimeout into a promise which resolves after ms milliseconds */
+   delay(ms, someVal),     /* utility function which lifts setTimeout into a promise which resolves after ms milliseconds with someVal */
    
    liftNormal(fn), /* utility function which takes a function that may return a normal value and turns it into a function which returns a promise that resolves to that normal value.  If fn already returns a promise, the new function's promise and reject methods are bound to it. (ie, you don't need to unwrap the promise value with .then twice) */
    
