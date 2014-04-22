@@ -144,28 +144,37 @@ define([],function(){
 		var ret=new promise();
 		var ignoreReject=false,resolved=0;
 		var combined=[];
+
+		if (Array.isArray(allArgs[0])) allArgs=allArgs[0];
 		
-		[].forEach.call(arguments,function(P,index){
-											getThen(P).then(
-												function(v){
-													combined[index]=v; 
-													resolved++;
-													if (resolved==allArgs.length)
-													{
-														console.log("all resolving");
-														ret.resolve(combined);
-													}
-													return v;
-													},
-												function(e){
-													if (!ignoreReject){
-														ingoreReject=true;
-														console.log("rejecting");
-														ret.reject(e);
-													}
-												});
-											});
-					
+		if (allArgs.length==0)
+		    {
+			ret.resolve([]);
+		    }
+		else
+		    {
+			allArgs.forEach(function(P,index){
+				getThen(P).then(
+						function(v){
+						    combined[index]=v; 
+						    resolved++;
+						    if (resolved==allArgs.length)
+							{
+							    console.log("all resolving");
+							    ret.resolve(combined);
+							}
+						    return v;
+						},
+						function(e){
+						    if (!ignoreReject){
+							ingoreReject=true;
+							console.log("rejecting");
+							ret.reject(e);
+						    }
+						});
+			    });
+		    }
+		
 		return ret.restricted;
 	}
 
@@ -178,82 +187,99 @@ define([],function(){
 		var ignoreResolve=false,rejected=0;
 		var combined=[];
 		
-		[].forEach.call(arguments,function(P,index){
-											getThen(P).then(
-												function(v){
-													if (!ignoreResolve)
-														{
-															ingoreResolve=true;
-															console.log("any resolving");
-															ret.resolve(v);
-														}
-													},
-												function(e)
-													{
-														combined[index]=e; 
-														rejected++;
-														if (rejected==allArgs.length)
-														{ 
-															console.log("any rejecting");
-															ret.reject(combined);
-														}
-													return v;
-													}
-												);
-											});
-					
+		if (Array.isArray(allArgs[0])) allArgs=allArgs[0];
+		
+		if (allArgs.length==0)
+		    {
+			ret.resolve([]);
+		    }
+		else
+		    {
+			allArgs.forEach(function(P,index){
+				getThen(P).then(
+						function(v){
+						    if (!ignoreResolve)
+							{
+							    ingoreResolve=true;
+							    console.log("any resolving");
+							    ret.resolve(v);
+							}
+						},
+						function(e)
+						{
+						    combined[index]=e; 
+						    rejected++;
+						    if (rejected==allArgs.length)
+							{ 
+							    console.log("any rejecting");
+							    ret.reject(combined);
+							}
+						    return v;
+						}
+						);
+			    });
+		    }
+		
 		return ret.restricted;
 	}
 
 	function some(){
 		//resolves when all of its arguments resolve or reject
-		//ex: some(promisedA,promisedB,promisedC) -> {resolvedA | resolvedB | resolvedC} or [rejectedA,rejectedB,rejectedC]
+		//ex: some(promisedA,promisedB,promisedC) -> [resolvedA, resolvedB, resolvedC], or [rejectedA,rejectedB,rejectedC], etc...
 
 		var allArgs=arguments;
 		var ret=new promise();
 		var done=0;
 		var combined=[];
+
+		if (Array.isArray(allArgs[0])) allArgs=allArgs[0];
 		
-		[].forEach.call(arguments,function(P,index){
-											getThen(P).then(
-												function(v){
-														combined[index]=v;
-														done++;
-														if (done==allArgs.length) ret.resolve(combined);
-													},
-												function(e)
-													{
-														done++;
-														if (done==allArgs.length) ret.resolve(combined);
-													}
-												);
-											});
-					
+		if (allArgs.length==0)
+		    {
+			ret.resolve([]);
+		    }
+		else
+		    {
+			allArgs.forEach(function(P,index){
+				getThen(P).then(
+						function(v){
+						    combined[index]=v;
+						    done++;
+						    if (done==allArgs.length) ret.resolve(combined);
+						},
+						function(e)
+						{
+						    done++;
+						    if (done==allArgs.length) ret.resolve(combined);
+						}
+						);
+			    });
+		    }
 		return ret.restricted;
 	}
-
+		
 	function delay(ms,valToResolve){
-		var ret=new promise();
-		setTimeout(ret.resolve.bind(ret,valToResolve),ms);
-		return ret.restricted;
+	    var ret=new promise();
+	    setTimeout(ret.resolve.bind(ret,valToResolve),ms);
+	    return ret.restricted;
 	}
 	
 	function liftNormal(fn){
-		//takes a function that returns a plain value, and converts it to return a promise
-		return function(){
-			var myArgs=[].slice.call(arguments,0);
-			var myPromise=new promise();
-			try
-			{
-				var ret=fn.apply(this,myArgs);
-				if (ret && ret.then) ret.then(myPromise.resolve,myPromise.reject);
-				else myPromise.resolve(ret);
-			}
-			catch(e){
-				myPromise.reject(e);
-			}
-			return myPromise;
+	    //takes a function that returns a plain value, and converts it to return a promise
+	    return function(){
+		var myArgs=[].slice.call(arguments,0);
+		var myPromise=new promise();
+		try
+		    {
+			var ret=fn.apply(this,myArgs);
+			if (ret && ret.then) ret.then(myPromise.resolve,myPromise.reject);
+			else myPromise.resolve(ret);
+		    }
+		catch(e){
+		    myPromise.reject(e);
 		}
+		return myPromise;
+	    }
 	}
 
 	return {promise:promise,all:all,any:any,some:some,delay:delay,liftNormal:liftNormal};
